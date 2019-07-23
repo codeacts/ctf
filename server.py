@@ -8,6 +8,7 @@ import pathlib
 import urllib
 import queue
 import threading
+import time
 from datetime import datetime
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler,HTTPServer
@@ -78,14 +79,17 @@ class SimpleHandler(BaseHTTPRequestHandler):
                 RECENTS[team]['first_capture'] = datetime.now()
                 self.set_headers(429)
                 self.wfile.write(bytes("<html><body><h1>throttled! try again in %s seconds</h1></body></html>\n" % str(THROTTLE[team]['secs']), 'ascii'))
+                print(RECENTS)
                 return
             else:
+                print("adding team: " + team)
                 FLAG_QUEUE.put(team)
                 if RECENTS[team]['count'] > THROTTLE[team]['count']:
                     RECENTS.pop(team)
                 self.set_headers(200)
                 self.wfile.write(bytes("<html><body><h1>captured the flag for %s team!</h1></body></html>\n" % str(team), 'ascii'))
-            print(RECENTS)
+                print(RECENTS)
+                return
         elif cmd == 'throttle':
             print('here0')
             if not params.get('captures', None):
@@ -191,7 +195,7 @@ async def hello(websocket, path):
     global FLAG_QUEUE
     for flag in iter(FLAG_QUEUE.get, None):
         try:
-            await asyncio.wait_for(websocket.send(flag), timeout=2)
+            await websocket.send(flag)
         except asyncio.TimeoutError:
             print("timeout, closing connection")
             try:

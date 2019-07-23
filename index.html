@@ -37,12 +37,14 @@ $(function () {
   }
   var reconnectInterval = 1000 * 5;
   var connect = function(){
+	  console.log("connecting...");
 	  connection = new WebSocket('ws://ctf.unixist.com');
 	  connection.onopen = function () {
 		  console.log("connected!");
 	  };
 	  connection.onerror = function (error) {
 		  console.log("connection failed: " + error);
+		  setTimeout(connect, reconnectInterval);
 	  };
 	  connection.onmessage = function (message) {
 		  console.log("incoming!");
